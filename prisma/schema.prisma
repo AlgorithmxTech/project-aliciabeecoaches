@@ -23,7 +23,9 @@ model article {
   author_by  String?   @db.Uuid
   created_at DateTime? @default(now()) @db.Timestamp(6)
   updated_at DateTime? @default(now()) @db.Timestamp(6)
-  slug       String?
+  slug       String?   @unique(map: "slug_name")
+  tags       String[]  @db.VarChar(50)
+  image_url  String?
   author     author?   @relation(fields: [author_by], references: [author_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_author")
 }
 
@@ -35,4 +37,12 @@ model author {
   created_at        DateTime? @default(now()) @db.Timestamp(6)
   updated_at        DateTime? @default(now()) @db.Timestamp(6)
   article           article[]
+}
+
+model resetToken {
+  id       String    @unique(map: "id") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
 }

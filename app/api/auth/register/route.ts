@@ -1,11 +1,19 @@
-import { registerService } from "@/services/register.server";
-import { NextApiRequest,NextApiResponse } from "next";
-export default async function handler(req:NextApiRequest,res:NextApiResponse) {
-    try {
-        const data = req.body
-        const register = await registerService(data)
-        res.status(200).json({message:'user created successfully!!'})
-    } catch (error) {
-        res.status(500).json({message:error})
-    }
+import { registerService } from "@/services/auth.services";
+import { NextResponse } from "next/server";
+
+export async function POST(req: Request) {
+  try {
+    const data = await req.json();
+    const user = await registerService(data);
+
+    return NextResponse.json(
+      { message: "User created successfully!", user },
+      { status: 201 }
+    );
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || "An unexpected error occurred" },
+      { status: 400 }
+    );
+  }
 }

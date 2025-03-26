@@ -1,15 +1,37 @@
-import { loginService } from "@/services/register.server";
+import { loginService } from "@/services/auth.services";
+import { NextResponse } from "next/server";
 import { signToken } from "@/utils/jwt";
-import { NextApiRequest,NextApiResponse } from "next";
 
-export default async function handler(req:NextApiRequest,res:NextApiResponse) {
-    try {
-        const data = req.body
-        const response = await loginService(data)
-        const token = await signToken(response!.id)
-        res.status(200).json({access_token:token})
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({message:error})
+export async function POST(req: Request) {
+  try {
+    const data = await req.json(); 
+
+    if (!data?.email || !data?.password) {
+      return NextResponse.json(
+        { error: "Email and password are required." },
+        { status: 400 }
+      );
     }
+
+    const user = await loginService(data);
+    const token = await signToken(user!.id); 
+
+
+    const response = NextResponse.json({ auth_token: token }, { status: 200 });
+
+
+    response.cookies.set('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', 
+      maxAge: 60 * 60 * 24, 
+    });
+console.log(response)
+    return response; 
+  } catch (error: any) {
+    console.error("Login error:", error);
+    return NextResponse.json(
+      { error: error.message || "Unexpected server error" },
+      { status: 400 }
+    );
+  }
 }

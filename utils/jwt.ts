@@ -1,18 +1,21 @@
-import jwt from 'jsonwebtoken'
+import { SignJWT, jwtVerify } from 'jose';
 
-export const signToken = async (id: string): Promise<string> => {
-    try {
-        if (!process.env.JWT_SECRET_KEY) {
-            throw new Error("JWT_SECRET_KEY is missing in .env file");
-        }
+const secret = new TextEncoder().encode(process.env.JWT_SECRET_KEY || 'dev-secret');
 
-        const token = jwt.sign({ userid: id }, process.env.JWT_SECRET_KEY, {
-            expiresIn: "24h",
-        });
+export async function signToken(id: string): Promise<string> {
+  return await new SignJWT({ userid: id })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('24h')
+    .setIssuedAt()
+    .sign(secret);
+}
 
-        return token;
-    } catch (error) {
-        console.error("Error signing token:", error);
-        throw new Error("Token generation failed");
-    }
-};
+export async function verifyToken(token: string): Promise<{ userid: string } | null> {
+  try {
+    const { payload } = await jwtVerify(token, secret);
+    return payload as { userid: string };
+  } catch (e) {
+    console.error("JWT verification failed:", e);
+    return null;
+  }
+}
