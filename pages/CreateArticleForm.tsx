@@ -52,7 +52,7 @@ const Editor = {
       ["clean"],
     ],
     clipboard: {
-      matchVisual: false, // avoid extra line breaks on paste
+      matchVisual: false, 
     },
     imageResize: {
       parchment: Quill.import("parchment"),

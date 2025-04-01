@@ -73,7 +73,7 @@ const LoginPage = () => {
     <div className="w-full min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-300 to-white">
       <div className="flex-grow flex items-center justify-center px-4">
         <Card
-          title={<Title level={3} className="!mb-0 !text-center">ABC Admin</Title>}
+          title={<Title level={3} className="!mb-0 !text-center"> Alicia Bee Coaches Login</Title>}
           className="w-full max-w-md shadow-2xl rounded-lg"
           style={{ borderRadius: 12 }}
         >

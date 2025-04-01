@@ -5,23 +5,14 @@ import { useParams } from 'next/navigation';
 import { Spin, Tag, Avatar } from 'antd';
 import { ClockCircleOutlined, UserOutlined } from '@ant-design/icons';
 
-interface Author {
-  author_name: string;
-}
-
-interface Article {
-  title: string;
-  content: string;
-  tags: string[]; // will convert to array if stored as string in DB
-  image_url?: string;
-  author?: Author;
-  created_at: string;
-}
+import Footer from "@/components/common/Footer/Footer";
+import Navbar from "@/components/common/NavBar/Navbar";
+import Layout from "@/components/common/Layout/Layout";
 
 export default function ArticlePage() {
   const params = useParams();
-  const slug = (params?.slug as string) || '';
-  const [article, setArticle] = useState<Article | null>(null);
+  const slug = params?.slug ;
+  const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,6 +30,7 @@ export default function ArticlePage() {
           ...data,
           tags: parsedTags,
         });
+        console.log(data)
       } catch (error) {
         console.error('Error fetching article:', error);
       } finally {
@@ -66,7 +58,10 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
+    <>
+    <Navbar/>
+    <Layout>
+    <div className="max-w-5xl h-auto mx-auto p-6">
       <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
 
       <div className="flex items-center justify-between mb-6 text-sm text-gray-500">
@@ -82,7 +77,7 @@ export default function ArticlePage() {
 
       {article.tags?.length > 0 && (
         <div className="mb-4 flex flex-wrap gap-2">
-          {article.tags.map((tag: string, index: number) => (
+          {article.tags.map((tag, index) => (
             <Tag key={index} color="blue">
               {tag}
             </Tag>
@@ -98,10 +93,12 @@ export default function ArticlePage() {
         />
       )}
 
-      <div
-        className=""
-        dangerouslySetInnerHTML={{ __html: article.content }}
-      />
+<div className="mt-5 dark:text-white text-black" dangerouslySetInnerHTML={{ __html: article.content }} />
+
     </div>
+    </Layout>
+    <Footer/>
+    </>
+    
   );
 }

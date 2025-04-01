@@ -48,7 +48,7 @@ const AdminNavbar = () => {
       <div className="max-w-[1280px] mx-auto flex justify-between items-center px-4">
         {/* Left: Brand */}
         <h1 className="text-lg font-bold">
-          ABC <span className="text-blue-400">Admin</span>
+        Alicia Bee Coaches Admin
         </h1>
 
         {/* Desktop Nav */}

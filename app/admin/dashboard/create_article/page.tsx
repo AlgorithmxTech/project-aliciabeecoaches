@@ -1,15 +1,22 @@
-"use clinet"
+"use client";
+export const dynamic = 'force-dynamic';
+import React, { Suspense } from 'react';
+
 import AdminNavbar from '@/components/common/AdminNav/AdminNav'
 import CreateArticleForm from '@/pages/CreateArticleForm'
-import React from 'react'
 
-const page = () => {
-  return (
-   <>
-   <AdminNavbar/>
-   <CreateArticleForm/>
-   </>
-  )
+
+function AddPostPage() {
+  return   <>
+  <AdminNavbar/>
+  <CreateArticleForm/>
+  </>;
 }
 
-export default page
+export default function Page() {
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <AddPostPage />
+    </Suspense>
+  );
+}

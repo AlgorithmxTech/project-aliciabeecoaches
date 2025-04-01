@@ -3,13 +3,13 @@ import React from 'react'
 import Footer from "@/components/common/Footer/Footer";
 import Navbar from "@/components/common/NavBar/Navbar";
 import Layout from "@/components/common/Layout/Layout";
-import ArticlesPage from '@/pages/ArticlePage';
+import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 const page = () => {
   return (
   <>
   <Navbar/>
   <Layout>
-    <ArticlesPage/>
+<PrivacyPolicyPage/>
   </Layout>
   <Footer/>
   </>
