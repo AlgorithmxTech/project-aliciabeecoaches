@@ -11,7 +11,7 @@ const Navbar = () => {
       <div className="max-w-[1280px] mx-auto h-full flex justify-between items-center px-4">
         
 
-        <h1 className="text-xl font-bold">ABC&apos;S OF AGILE WITH <br/> ALICIA BEE COACHES</h1>
+        <h1 className="text-xl font-bold">Alicia Bee Coaches</h1>
 
 
         <nav className="hidden md:flex gap-6">

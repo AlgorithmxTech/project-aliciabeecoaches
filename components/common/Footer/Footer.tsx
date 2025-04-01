@@ -2,7 +2,7 @@ import React from 'react'
 import { FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa6'
 const Footer = () => {
     return (
-        <div className='w-full bg-gray-900 py-10'>
+        <div className='w-full bg-gray-900 py-10 text-white'>
             <div className='max-w-[1280px] mx-auto flex flex-col items-center gap-5'>
                 <div className='flex items-center flex-col'>
                     <span>
