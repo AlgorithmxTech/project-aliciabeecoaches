@@ -1,5 +1,7 @@
 import React from 'react'
 import { FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa6'
+import petrionImage from '../../../public/images/patrion_icon.svg'
+import Image from 'next/image'
 const Footer = () => {
     return (
         <div className='w-full bg-gray-900 py-10 text-white'>
@@ -16,15 +18,37 @@ const Footer = () => {
                 </div>
                 {/* social media links */}
                 <div className='flex gap-5 '>
-                    <FaFacebook size={34} className='text-red-500' />
-                    <FaInstagram size={34} className='text-red-500' />
-                    <FaTiktok size={34} className='text-red-500' />
+                    <div className='rounded-full p-2 bg-red-500 '>
+                        <FaInstagram size={24} className=' text-black' />
+                    </div>
+                    <div className='rounded-full p-2 bg-red-500 '>
+                        <FaTiktok size={24} className='text-black' />
+                    </div>
+                    <div className='rounded-full p-2 bg-red-500 '>
+                        <Image
+                            src={petrionImage}
+                            alt='patreon_logo'
+                            className='w-[24px] h-[24px]'
+                        />
+                    </div>
+
                 </div>
 
-                <div className='flex  py-5 justify-between w-full items-center'>
-                    <span>©2025 by ABC&apos;s of Agile with Alicia Bee.</span>
-                    <span>Developed By Algorithmx </span>
+                <div className="flex py-5 justify-between w-full items-center">
+                    <span>©2025 by ABC&apos;s of Agile with Alicia Bee Coaches.</span>
+                    <span>
+                        Developed by{' '}
+                        <a
+                            href="https://algorithmx.tech"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                        >
+                            Algorithmx
+                        </a>
+                    </span>
                 </div>
+
 
             </div>
 

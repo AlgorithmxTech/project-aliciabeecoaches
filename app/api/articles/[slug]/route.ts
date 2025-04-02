@@ -1,10 +1,12 @@
-// app/api/articles/[slug]/route.ts
+import { NextResponse } from 'next/server';
+import { getArticleBySlug, deleteArticle,updateArticle } from '@/services/article.services';
 
-import {  NextResponse } from 'next/server';
-import { getArticleBySlug,deleteArticle } from '@/services/article.services';
-
-export async function GET(req: Request, context: { params: { slug: string } }) {
-  const { slug } = context.params;
+export async function GET(
+  req: Request,
+  contextPromise: Promise<{ params: { slug: string } }>
+) {
+  const { params } = await contextPromise;
+  const { slug } = params;
 
   try {
     const article = await getArticleBySlug(slug);
@@ -21,13 +23,42 @@ export async function GET(req: Request, context: { params: { slug: string } }) {
 }
 
 export async function DELETE(
-  _req: Request,
-  { params }: { params: { slug: string } }
+  req: Request,
+  contextPromise: Promise<{ params: { slug: string } }>
 ) {
+  const { params } = await contextPromise;
+  const { slug } = params;
+
   try {
-    const deleted = await deleteArticle(params.slug);
+    const deleted = await deleteArticle(slug);
     return NextResponse.json(deleted);
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 });
+  }
+}
+
+
+export async function PUT(
+  req: Request,
+  contextPromise: Promise<{ params: { slug: string } }>
+) {
+  const { params } = await contextPromise;
+  const { slug } = params;
+
+  try {
+    const body = await req.json();
+    const { title, slug: newSlug, tags, author_by, content } = body;
+
+    const updated = await updateArticle(slug, {
+      title,
+      slug: newSlug,
+      tags,
+      content,
+    });
+
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    console.error('Error updating article:', error);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

@@ -22,17 +22,13 @@ Quill.register('modules/imageResize', QuillResizeImage)
 const { TextArea } = Input;
 const { Option } = Select;
 
-interface Author {
-  author_id: string;
-  author_name: string;
-}
 
 const CreateArticleForm: React.FC = () => {
   const [form] = Form.useForm();
   const [content, setContent] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [authors, setAuthors] = useState<Author[]>([]);
+
   const router = useRouter();
  
 
@@ -77,19 +73,7 @@ const Editor = {
   ],
 };
   // Fetch authors on mount
-  useEffect(() => {
-    const fetchAuthors = async () => {
-      try {
-        const res = await fetch('/api/authors');
-        const data = await res.json();
-        setAuthors(data);
-      } catch (error) {
-        console.error('Error fetching authors:', error);
-      }
-    };
-
-    fetchAuthors();
-  }, []);
+  
 
   const handleSubmit = async (values: any) => {
     if (!file) {
@@ -99,7 +83,6 @@ const Editor = {
     const formData = new FormData();
     formData.append('title', values.title);
     formData.append('tags', JSON.stringify(values.tags));
-    formData.append('author_by', values.author_by);
     formData.append('content', content);
     formData.append('image', file);
 
@@ -138,15 +121,6 @@ const Editor = {
           <Select mode="tags" style={{ width: '100%' }} placeholder="Add tags" />
         </Form.Item>
 
-        <Form.Item label="Author" name="author_by" rules={[{ required: true }]}>
-          <Select placeholder="Select author">
-            {authors.map((author) => (
-              <Option key={author.author_id} value={author.author_id}>
-                {author.author_name}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
 
         <Form.Item label="Cover Image" required>
           <Input
