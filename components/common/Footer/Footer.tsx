@@ -1,7 +1,8 @@
 import React from 'react'
-import { FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa6'
+import { FaYoutube, FaInstagram, FaTiktok } from 'react-icons/fa6'
 import petrionImage from '../../../public/images/patrion_icon.svg'
 import Image from 'next/image'
+import Link from 'next/link'
 const Footer = () => {
     return (
         <div className='w-full bg-gray-900 py-10 text-white'>
@@ -19,10 +20,23 @@ const Footer = () => {
                 {/* social media links */}
                 <div className='flex gap-5 '>
                     <div className='rounded-full p-2 bg-red-500 '>
-                        <FaInstagram size={24} className=' text-black' />
+                        <Link href={'https://www.tiktok.com/@aliciabeecoaches'}>
+                            <FaTiktok size={24} className='text-black' />
+                  
+                        </Link>
+
                     </div>
                     <div className='rounded-full p-2 bg-red-500 '>
-                        <FaTiktok size={24} className='text-black' />
+                        <Link href={'https://instagram.com/AliciaBeeCoaches'}>
+
+                            <FaInstagram size={24} className=' text-black' />
+                        </Link>
+                    </div>
+                    <div className='rounded-full p-2 bg-red-500 '>
+                        <Link href={'https://www.youtube.com/@AliciaBeeCoaches'}>
+
+                            <FaYoutube size={24} className=' text-black' />
+                        </Link>
                     </div>
                     <div className='rounded-full p-2 bg-red-500 '>
                         <Image
