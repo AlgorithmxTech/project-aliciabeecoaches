@@ -11,8 +11,7 @@ const AdminNavbar = () => {
   const router = useRouter()
 
   const navLinks = [
-    { label: "Dashboard", href: "/admin/dashboard" },
-    { label: "Authors", href: "/admin/authors" },
+    { label: "Articles", href: "/admin/dashboard" },
   ]
 
   const handleLogout = async () => {
@@ -31,11 +30,7 @@ const AdminNavbar = () => {
   }
   
   const dropdownItems: MenuProps["items"] = [
-    {
-      key: "profile",
-      label: <span>Profile</span>,
-      icon: <UserOutlined />,
-    },
+ 
     {
       key: "logout",
       label: <span onClick={handleLogout}>Logout</span>,
@@ -48,7 +43,7 @@ const AdminNavbar = () => {
       <div className="max-w-[1280px] mx-auto flex justify-between items-center px-4">
         {/* Left: Brand */}
         <h1 className="text-lg font-bold">
-        Alicia Bee Coaches Admin
+        Alicia Bee Coaches 
         </h1>
 
         {/* Desktop Nav */}

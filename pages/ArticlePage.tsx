@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Avatar, Button, Input, Tag } from 'antd';
 import { useRouter } from 'next/navigation';
-import { HeartOutlined, ShareAltOutlined } from '@ant-design/icons';
+import { HeartOutlined, HeartFilled, ShareAltOutlined } from '@ant-design/icons';
+import { BsHeartFill,BsHeart } from 'react-icons/bs';
 import Link from 'next/link';
-
+import ShareMenu from '@/components/ui/ShareMenu';
 const { Search } = Input;
 
 interface Article {
@@ -17,6 +18,7 @@ interface Article {
     author_by: string;
     created_at: string;
     views: number;
+    likes: number;
     tags: string[];
 }
 
@@ -38,6 +40,7 @@ const ArticlesPage = () => {
     const [tags, setTags] = useState<string[]>([]);
     const [selectedTag, setSelectedTag] = useState<string | null>('All Posts');
     const [showAllTags, setShowAllTags] = useState(false);
+    const [showShare, setShowShare] = useState<string | null>(null);
     const [searchText, setSearchText] = useState('');
     const router = useRouter();
 
@@ -45,8 +48,39 @@ const ArticlesPage = () => {
         const fetchArticles = async () => {
             const res = await fetch('/api/articles');
             const data = await res.json();
-            setArticles(data);
-            setFilteredArticles(data);
+
+            // Fetch views for each article in parallel
+            const viewsData = await Promise.all(
+                data.map(async (article: Article) => {
+                    try {
+                        const res = await fetch(`/api/articles/${article.slug}/views`);
+                        const viewJson = await res.json();
+                        return viewJson.views || 0;
+                    } catch {
+                        return 0;
+                    }
+                })
+            );
+
+            const likesData = await Promise.all(
+                data.map(async (article: Article) => {
+                    try {
+                        const res = await fetch(`/api/articles/${article.slug}/likes`);
+                        const likeJson = await res.json();
+                        return likeJson.likes || 0;
+                    } catch {
+                        return 0;
+                    }
+                })
+            );
+
+            const articlesWithCounts = data.map((article: Article, i: number) => ({
+                ...article,
+                views: viewsData[i],
+                likes: likesData[i],
+            }));
+            setArticles(articlesWithCounts);
+            setFilteredArticles(articlesWithCounts);
 
             const uniqueTags = ['All Posts', ...new Set(data.flatMap((article: Article) => article.tags))];
             setTags(uniqueTags);
@@ -61,6 +95,49 @@ const ArticlesPage = () => {
         fetchArticles();
         fetchAuthors();
     }, []);
+
+    const handleLike = async (slug: string) => {
+        const likeKey = `liked:${slug}`;
+        const alreadyLiked = localStorage.getItem(likeKey);
+      
+        const action = alreadyLiked ? 'unlike' : 'like';
+      
+        const res = await fetch(`/api/articles/${slug}/likes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        });
+      
+        if (res.ok) {
+          const result = await res.json();
+      
+          if (action === 'like') {
+            localStorage.setItem(likeKey, 'true');
+          } else {
+            localStorage.removeItem(likeKey);
+          }
+      
+          // Update article likes in UI
+          setArticles(prev =>
+            prev.map(article =>
+              article.slug === slug
+                ? { ...article, likes: result.likes }
+                : article
+            )
+          );
+          setFilteredArticles(prev =>
+            prev.map(article =>
+              article.slug === slug
+                ? { ...article, likes: result.likes }
+                : article
+            )
+          );
+        }
+      };
+      
+      const isLiked = (slug: string): boolean => {
+        return !!localStorage.getItem(`liked:${slug}`);
+      };
 
     const handleTagFilter = (tag: string) => {
         if (tag === 'All Posts') {
@@ -130,18 +207,18 @@ const ArticlesPage = () => {
             <div className="grid grid-cols-1 gap-6">
                 {filteredArticles.map(article => (
                     <Card key={article.article_id}>
-                        <div className="w-full shadow-md hover:shadow-lg transition p-4 flex flex-col md:flex-row">
+                        <div className="w-full shadow-md hover:shadow-lg transition p-4 flex flex-col relative md:flex-row">
                             {/* Article Image (Left Side) */}
                             <div className="w-full md:w-1/2">
                                 <img
                                     alt={article.title}
                                     src={article.image_url}
-                                    className="h-58 w-full object-cover rounded-md"
+                                    className="h-68 w-full object-cover rounded-md"
                                 />
                             </div>
 
 
-                            <div className="w-full md:w-2/3 md:pl-4 flex flex-col justify-between">
+                            <div className="w-full md:w-2/3 relative  md:pl-4 flex flex-col justify-between">
                                 <div className='w-full'>
                                     <div className="flex  w-full flex-col items-start mb-3">
                                         <div className='w-full flex items-center justify-between'>
@@ -150,47 +227,76 @@ const ArticlesPage = () => {
                                                 <img
                                                     alt={getAuthorName(article.author_by)}
                                                     src={getAuthorImage(article.author_by)}
-                                                    className="h-18 w-full object-cover rounded-full"
+                                                    className="h-18 w-18 object-cover rounded-full"
                                                 />
-                                                <span className="ml-2  text-xl font-medium">{getAuthorName(article.author_by)}</span>
+                                                <div className='flex flex-col'>
+                                                    <span className="ml-2 capitalize  text-xl font-medium">{getAuthorName(article.author_by)}</span>
+                                                    <span className="ml-2 text-gray-500 text-sm">
+                                                        {new Date(article.created_at).toLocaleDateString('en-US', {
+                                                            month: 'long',
+                                                            day: 'numeric',
+                                                            year: 'numeric'
+                                                        })} • {calculateReadTime(article.content)}
+                                                    </span>
+                                                </div>
+
                                             </div>
                                             <div className="flex items-center space-x-3">
-                                                <HeartOutlined className="cursor-pointer text-red-500 text-lg" />
-                                                <ShareAltOutlined className="cursor-pointer text-gray-500 text-lg" />
+                                                <div className="flex items-center gap-1 cursor-pointer" onClick={() => handleLike(article.slug)}>
+                                                    {isLiked(article.slug) ? (
+                                                        <BsHeartFill className="text-red-500 text-lg" />
+                                                    ) : (
+                                                        <BsHeart className="text-red-500 text-lg" />
+                                                    )}
+                                                
+                                                </div>
+
+                                                <div className="relative">
+                                                    <ShareAltOutlined
+                                                        className="cursor-pointer text-gray-500 text-lg"
+                                                        onClick={() => setShowShare(prev => (prev === article.slug ? null : article.slug))}
+                                                    />
+                                                    <ShareMenu
+                                                        show={showShare === article.slug}
+                                                        slug={article.slug}
+                                                        onClose={() => setShowShare(null)}
+                                                    />
+                                                </div>
+
                                             </div>
                                         </div>
 
 
-                                        <span className="ml-2 text-gray-500 text-sm">
-                                            {new Date(article.created_at).toLocaleDateString('en-US', {
-                                                month: 'long',
-                                                day: 'numeric',
-                                                year: 'numeric'
-                                            })} • {calculateReadTime(article.content)}
-                                        </span>
+
 
                                     </div>
 
                                     <h3 className="text-xl font-semibold">{article.title}</h3>
                                     <p
                                         className="text-gray-600 mt-2"
-                                        dangerouslySetInnerHTML={{ __html: article.content.slice(0, 250) + "..." }}
+                                        dangerouslySetInnerHTML={{ __html: article.content.slice(0, 350) + "..." }}
                                     />
                                     <div className="mt-3 font-bold">
                                         <Link
 
-                                            
+
                                             href={`/articles/${article.slug}`}
                                         >
                                             <span className='text-red-500 ' >
-                                            Read More →
+                                                Read More →
                                             </span>
-                                         
+
                                         </Link>
                                     </div>
 
                                 </div>
 
+
+
+                                <div className='absolute bottom-0 right-0 md:left-0 px-5'>
+                                    <span className='text-red-500'>{article.views} {article.views === 1 ? 'view' : 'views'}</span>
+
+                                </div>
 
                             </div>
                         </div>

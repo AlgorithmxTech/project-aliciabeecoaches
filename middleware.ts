@@ -20,7 +20,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (token) {
-    const session = await verifyToken(token); // ✅ Await jose-based verify
+    const session = await verifyToken(token);
     if (!session) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }

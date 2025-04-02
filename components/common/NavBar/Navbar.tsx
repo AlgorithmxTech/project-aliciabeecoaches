@@ -2,16 +2,24 @@
 import React, { useState } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 import Link from "next/link";
-
+import Image from "next/image";
+import Logo from '../../../public/images/picsvg_download.svg'
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="w-full  py-5 bg-gray-800 text-white">
+    <div className="w-full  py-5 bg-black text-white">
       <div className="max-w-[1280px] mx-auto h-full flex justify-between items-center px-4">
         
-
-        <h1 className="text-xl font-bold">Alicia Bee Coaches</h1>
+<div className="flex flex-col items-center gap-3">
+  <Image
+  src={Logo}
+  alt="alicia Bee Coached"
+className="w-16 h-18"
+  />
+<h1 className="text-xl font-bold">Alicia Bee Coaches</h1>
+</div>
+        
 
 
         <nav className="hidden md:flex gap-6">

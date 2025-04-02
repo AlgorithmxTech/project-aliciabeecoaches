@@ -2,35 +2,57 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Spin, Tag, Avatar } from 'antd';
-import { ClockCircleOutlined, UserOutlined } from '@ant-design/icons';
-
+import useViewTracker from '@/app/hooks/useViewTracker';
 import Footer from "@/components/common/Footer/Footer";
 import Navbar from "@/components/common/NavBar/Navbar";
 import Layout from "@/components/common/Layout/Layout";
+import { BsHeartFill, BsHeart } from 'react-icons/bs';
+import { FaFacebookF, FaLinkedinIn, FaLink } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 
 export default function ArticlePage() {
   const params = useParams();
-  const slug = params?.slug ;
+  const slug = params?.slug;
+
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [views, setViews] = useState(0);
+
+  useViewTracker(slug);
+
+  const articleUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/articles/${slug}`
+    : '';
+
+  const calculateReadTime = (content) => {
+    const words = content.replace(/<[^>]+>/g, '').split(/\s+/).length;
+    return `${Math.ceil(words / 200)} min read`;
+  };
 
   useEffect(() => {
     if (!slug) return;
 
-    const fetchArticle = async () => {
+    const fetchData = async () => {
       try {
         const res = await fetch(`/api/articles/${slug}`);
         const data = await res.json();
-
-        // If tags is a stringified array, convert it to real array
         const parsedTags = typeof data.tags === 'string' ? JSON.parse(data.tags) : data.tags;
 
-        setArticle({
-          ...data,
-          tags: parsedTags,
-        });
-        console.log(data)
+        setArticle({ ...data, tags: parsedTags });
+
+        const likeRes = await fetch(`/api/articles/${slug}/likes`);
+        const likeData = await likeRes.json();
+        setLikeCount(likeData.likes || 0);
+
+        const viewedRes = await fetch(`/api/articles/${slug}/views`);
+        const viewData = await viewedRes.json();
+        setViews(viewData.views || 0);
+
+        const likedKey = `liked:${slug}`;
+        const alreadyLiked = localStorage.getItem(likedKey);
+        setLiked(!!alreadyLiked);
       } catch (error) {
         console.error('Error fetching article:', error);
       } finally {
@@ -38,67 +60,136 @@ export default function ArticlePage() {
       }
     };
 
-    fetchArticle();
+    fetchData();
   }, [slug]);
 
-  if (loading) {
+  const handleLike = async () => {
+    const likeKey = `liked:${slug}`;
+    const alreadyLiked = localStorage.getItem(likeKey);
+    const action = alreadyLiked ? 'unlike' : 'like';
+
+    const res = await fetch(`/api/articles/${slug}/likes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+    });
+
+    if (res.ok) {
+      const result = await res.json();
+      setLikeCount(result.likes);
+
+      if (action === 'like') {
+        localStorage.setItem(likeKey, 'true');
+        setLiked(true);
+      } else {
+        localStorage.removeItem(likeKey);
+        setLiked(false);
+      }
+    }
+  };
+
+  if (loading || !article) {
     return (
       <div className="flex justify-center items-center h-96">
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  if (!article) {
-    return (
-      <div className="text-center mt-20 text-lg text-gray-500">
-        Article not found.
+        Loading...
       </div>
     );
   }
 
   return (
     <>
-    <Navbar/>
-    <Layout>
-    <div className="max-w-5xl h-auto mx-auto p-6">
-      <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
+      <Navbar />
+      <Layout>
+        <div className="max-w-5xl mx-auto p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6 text-sm text-gray-500">
+            <div className="flex items-center gap-2">
+              <img
+                alt={article.author?.author_name}
+                src={article.author?.author_image}
+                className="h-10 w-10 object-cover rounded-full"
+              />
+              <div className='flex flex-col'>
+                <span className='text-md text-bold text-black capitalize'>
+                  {article.author?.author_name || 'Unknown Author'}
+                </span>
+                <span className="text-gray-500 text-sm">
+                  {new Date(article.created_at).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric'
+                  })} • {calculateReadTime(article.content)}
+                </span>
+              </div>
+            </div>
 
-      <div className="flex items-center justify-between mb-6 text-sm text-gray-500">
-        <div className="flex items-center gap-2">
-          <Avatar icon={<UserOutlined />} />
-          <span>{article.author?.author_name || 'Unknown Author'}</span>
+
+            <div
+              className="flex text-red-500 items-center gap-1 cursor-pointer"
+              onClick={handleLike}
+            >
+              {liked ? <BsHeartFill size={24} /> : <BsHeart size={24} />}
+          
+            </div>
+          </div>
+
+          {/* Title */}
+          <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
+
+          {/* Image */}
+          {article.image_url && (
+            <img
+              src={article.image_url}
+              alt={article.title}
+              className="w-full max-h-[500px] object-cover rounded mb-6"
+            />
+          )}
+
+          {/* Tags */}
+          {article.tags?.length > 0 && (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {article.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="border rounded-full px-3 py-1 text-sm border-gray-400 text-gray-600"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Content */}
+          <div
+            className="prose prose-lg text-black dark:text-white mb-10"
+            dangerouslySetInnerHTML={{ __html: article.content }}
+          />
+
+          {/* Share Icons */}
+          <hr className='w-full h-[2px]' />
+          <div className='py-4 flex items-center gap-3 text-gray-600'>
+            <a href={`https://www.facebook.com/sharer/sharer.php?u=${articleUrl}`} target="_blank" rel="noopener noreferrer">
+              <FaFacebookF size={22} />
+            </a>
+            <a href={`https://twitter.com/intent/tweet?url=${articleUrl}`} target="_blank" rel="noopener noreferrer">
+              <FaXTwitter size={22} />
+            </a>
+            <a href={`https://www.linkedin.com/shareArticle?url=${articleUrl}`} target="_blank" rel="noopener noreferrer">
+              <FaLinkedinIn size={22} />
+            </a>
+            <button onClick={() => navigator.clipboard.writeText(articleUrl)} title="Copy Link">
+              <FaLink size={22} />
+            </button>
+          </div>
+          <hr className='w-full h-[2px]' />
+
+          {/* Views */}
+          <div className="pt-4 text-gray-500">
+            <span>{views} {views === 1 ? 'view' : 'views'}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <ClockCircleOutlined />
-          <span>{new Date(article.created_at).toLocaleDateString()}</span>
-        </div>
-      </div>
-
-      {article.tags?.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2">
-          {article.tags.map((tag, index) => (
-            <Tag key={index} color="blue">
-              {tag}
-            </Tag>
-          ))}
-        </div>
-      )}
-
-      {article.image_url && (
-        <img
-          src={article.image_url}
-          alt={article.title}
-          className="w-full max-h-[500px] object-cover rounded mb-6"
-        />
-      )}
-
-<div className="mt-5 dark:text-white text-black" dangerouslySetInnerHTML={{ __html: article.content }} />
-
-    </div>
-    </Layout>
-    <Footer/>
+      </Layout>
+      <Footer />
     </>
-    
   );
 }

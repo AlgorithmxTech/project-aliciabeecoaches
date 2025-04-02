@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const title = formData.get('title')?.toString() || '';
     const content = formData.get('content')?.toString() || '';
     const tags = formData.get('tags')?.toString() || '[]';
-    const author_by = formData.get('author_by')?.toString();
+
   
     let image_url: string | undefined = undefined;
   
@@ -33,7 +33,6 @@ export async function POST(req: NextRequest) {
       title,
       content,
       tags: JSON.parse(tags),
-      author_by: author_by || undefined,
       image_url,
     });
   

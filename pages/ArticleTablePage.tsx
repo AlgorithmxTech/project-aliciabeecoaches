@@ -14,6 +14,10 @@ import {
   Select,
 } from 'antd';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
+import 'react-quill-new/dist/quill.snow.css';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -24,11 +28,14 @@ interface Article {
   slug?: string;
   tags: string[];
   author_by?: string;
+  content: string;
 }
 
 interface Author {
   author_id: string;
   author_name: string;
+  author_desciption: string;
+  author_image?: string;
 }
 
 const ArticleTablePage: React.FC = () => {
@@ -39,7 +46,13 @@ const ArticleTablePage: React.FC = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [currentArticle, setCurrentArticle] = useState<Article | null>(null);
   const [form] = Form.useForm();
+  const [quillContent, setQuillContent] = useState('');
   const router = useRouter();
+
+  const [editAuthorVisible, setEditAuthorVisible] = useState(false);
+  const [authorForm] = Form.useForm();
+  const constantAuthorId = 'a8c743fb-60dc-4c2f-8ccf-264dbf4a6c00';
+  const [authorLoading, setAuthorLoading] = useState(false);
 
   const fetchArticles = async () => {
     setLoading(true);
@@ -55,6 +68,56 @@ const ArticleTablePage: React.FC = () => {
     const data = await res.json();
     setAuthors(data);
   };
+
+  const fetchAuthor = async () => {
+    try {
+      setAuthorLoading(true);
+      const res = await fetch(`/api/authors/${constantAuthorId}`);
+      const data = await res.json();
+      if (res.ok) {
+        authorForm.setFieldsValue(data);
+        setEditAuthorVisible(true);
+      } else {
+        message.error(data.error || 'Failed to fetch author');
+      }
+    } catch (err) {
+      message.error('Error fetching author');
+    } finally {
+      setAuthorLoading(false);
+    }
+  };
+
+  const handleAuthorSubmit = async () => {
+    try {
+      const values = await authorForm.validateFields();
+      const formData = new FormData();
+
+      formData.append('author_name', values.author_name);
+      formData.append('author_desciption', values.author_desciption);
+
+      const file = authorForm.getFieldValue('author_image_file');
+      if (file) {
+        formData.append('author_image', file);
+      }
+
+      const res = await fetch(`/api/authors/${constantAuthorId}`, {
+        method: 'PUT',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        message.success('Author updated successfully');
+        setEditAuthorVisible(false);
+        fetchAuthors();
+      } else {
+        message.error(data.error || 'Failed to update author');
+      }
+    } catch (err) {
+      message.error('Update failed');
+    }
+  };
+
 
   useEffect(() => {
     fetchArticles();
@@ -86,6 +149,7 @@ const ArticleTablePage: React.FC = () => {
 
   const openEditModal = (article: Article) => {
     setCurrentArticle(article);
+    setQuillContent(article.content);
     form.setFieldsValue({
       title: article.title,
       slug: article.slug,
@@ -97,11 +161,12 @@ const ArticleTablePage: React.FC = () => {
 
   const handleEditSubmit = async () => {
     const values = await form.validateFields();
+    const payload = { ...values, content: quillContent };
     try {
       const res = await fetch(`/api/articles/${currentArticle?.article_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         message.success('Article updated successfully');
@@ -176,12 +241,15 @@ const ArticleTablePage: React.FC = () => {
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Articles</h2>
-        <Button
-          type="primary"
-          onClick={() => router.push('/admin/dashboard/create_article')}
-        >
-          Create Article
-        </Button>
+        <Space>
+          <Button onClick={fetchAuthor}>Edit Author</Button>
+          <Button
+            type="primary"
+            onClick={() => router.push('/admin/dashboard/create_article')}
+          >
+            Create Article
+          </Button>
+        </Space>
       </div>
 
       <Space style={{ marginBottom: 16 }}>
@@ -202,12 +270,14 @@ const ArticleTablePage: React.FC = () => {
         pagination={{ pageSize: 10 }}
       />
 
+      {/* Edit Article Modal */}
       <Modal
         title="Edit Article"
         open={editModalVisible}
         onCancel={() => setEditModalVisible(false)}
         onOk={handleEditSubmit}
         okText="Update"
+        width={800}
       >
         <Form layout="vertical" form={form}>
           <Form.Item
@@ -240,8 +310,68 @@ const ArticleTablePage: React.FC = () => {
               ))}
             </Select>
           </Form.Item>
+          <Form.Item label="Content">
+            <ReactQuill
+              theme="snow"
+              value={quillContent}
+              onChange={setQuillContent}
+              style={{ height: '250px' }}
+            />
+          </Form.Item>
         </Form>
       </Modal>
+
+      {/* Edit Author Modal */}
+      <Modal
+        title="Edit Author"
+        open={editAuthorVisible}
+        onCancel={() => setEditAuthorVisible(false)}
+        onOk={handleAuthorSubmit}
+        okText="Update"
+        confirmLoading={authorLoading}
+      >
+        <Form layout="vertical" form={authorForm}>
+          <Form.Item
+            name="author_name"
+            label="Author Name"
+            rules={[{ required: true, message: 'Author name is required' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="author_desciption"
+            label="Description"
+            rules={[{ required: true, message: 'Description is required' }]}
+          >
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Form.Item label="Current Image">
+            {authorForm.getFieldValue('author_image') ? (
+              <img
+                src={authorForm.getFieldValue('author_image')}
+                alt="Author"
+                className='w-18 h-18'
+                style={{ maxWidth: '100%', borderRadius: '0.5rem', marginBottom: 8 }}
+              />
+            ) : (
+              <span>No image available</span>
+            )}
+          </Form.Item>
+          <Form.Item label="Upload New Image">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  authorForm.setFieldValue('author_image_file', file);
+                }
+              }}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+
     </div>
   );
 };
